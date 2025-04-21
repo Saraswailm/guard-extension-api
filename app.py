@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from urllib.parse import urlparse
 import joblib
 import re
+import requests  # Import requests to handle redirects
 
 app = Flask(__name__)
 model = joblib.load("phishing_model.pkl")
@@ -33,10 +34,21 @@ def extract_features(url):
 def predict():
     data = request.get_json()
     url = data.get("url", "")
-    features = [extract_features(url)]
+
+    try:
+        # Fetch the final URL after following redirects
+        response = requests.get(url, timeout=5, allow_redirects=True)
+        final_url = response.url
+        print(f"[INFO] Final resolved URL: {final_url}")  # Debugging info
+    except requests.exceptions.RequestException as e:
+        # If the request fails, use the original URL
+        final_url = url
+        print(f"[ERROR] Failed to fetch URL. Using original: {url}")
+
+    # Extract features from the final URL
+    features = [extract_features(final_url)]
     prediction = model.predict(features)[0]
     return jsonify({"result": int(prediction)})
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5001)
-
