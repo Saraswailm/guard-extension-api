@@ -3,8 +3,11 @@ from urllib.parse import urlparse
 import joblib
 import re
 import requests  # Import requests to handle redirects
+from flask_cors import CORS
+
 
 app = Flask(__name__)
+CORS(app)
 model = joblib.load("phishing_model.pkl")
 
 def extract_features(url):
