@@ -1,40 +1,36 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Guard Extension</title>
+  <title>FISHIX</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      width: 250px;
-      padding: 15px;
-      background: #f4f4f4;
+      padding: 20px;
+      width: 300px;
+      background: #f9f9f9;
     }
-    h2 {
-      font-size: 18px;
+    h1 {
+      font-size: 16px;
       margin-bottom: 10px;
     }
-    #result {
-      font-weight: bold;
-      font-size: 16px;
+    .status {
       padding: 10px;
+      border-radius: 6px;
+      font-weight: bold;
       text-align: center;
-      border-radius: 8px;
     }
     .safe {
-      background-color: #d4edda;
-      color: #155724;
+      background-color: #ccffcc;
+      color: #006600;
     }
     .phishing {
-      background-color: #f8d7da;
-      color: #721c24;
+      background-color: #ffcccc;
+      color: #990000;
     }
   </style>
 </head>
 <body>
-  <h2>🔍 Guard Extension</h2>
-  <p>Scanning current website...</p>
-  <div id="result">Waiting...</div>
-
+  <h1>🛡️ Guard Extension</h1>
+  <div id="status" class="status">Scanning...</div>
   <script src="popup.js"></script>
 </body>
 </html>
