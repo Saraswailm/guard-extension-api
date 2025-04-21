@@ -3,3 +3,5 @@ scikit-learn
 flask-cors
 gunicorn
 joblib
+requests
+
