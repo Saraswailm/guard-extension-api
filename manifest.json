@@ -1,15 +1,28 @@
 {
   "manifest_version": 3,
-  "name": "Guard Extension",
+  "name": "Fishix",
   "version": "1.0",
-  "description": "Automatically detects phishing URLs using a trained ML model.",
-  "permissions": ["activeTab", "scripting"],
-  "host_permissions": [
-    "<all_urls>",
-    "https://guard-extension-api.onrender.com/*"
+  "description": "Pauses suspicious URLs before allowing navigation.",
+  "permissions": [
+    "webRequest",
+    "webRequestBlocking",
+    "tabs",
+    "storage"
   ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+      "128": "icon128.png"
+    }
+  },
+  "icons": {
+    "128": "icon128.png"
   },
   "content_scripts": [
     {
