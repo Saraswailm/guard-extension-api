@@ -1,24 +1,28 @@
-let pausedRequest = null;
-
 chrome.webRequest.onBeforeRequest.addListener(
-  async (details) => {
-    if (details.type === "main_frame") {
-      pausedRequest = details;
-      chrome.tabs.sendMessage(details.tabId, { action: "phishing-check", url: details.url });
-      return { cancel: true }; // Cancel temporarily
-    }
-  },
-  { urls: ["<all_urls>"] },
-  ["blocking"]
-);
-
-chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  if (msg.action === "user-decision" && pausedRequest) {
-    if (msg.allow) {
-      chrome.tabs.update(pausedRequest.tabId, { url: pausedRequest.url });
-    } else {
-      chrome.tabs.update(pausedRequest.tabId, { url: "about:blank" });
-    }
-    pausedRequest = null;
-  }
-});
+    async function(details) {
+      const url = details.url;
+  
+      try {
+        const response = await fetch("https://guard-extension-api.onrender.com/predict", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url })
+        });
+  
+        const result = await response.json();
+  
+        if (result.result === 1) {
+          await chrome.storage.local.set({ blockedUrl: url });
+          return { redirectUrl: chrome.runtime.getURL("warning.html") };
+        }
+  
+      } catch (err) {
+        console.error("Detection failed:", err);
+      }
+  
+      return {};
+    },
+    { urls: ["<all_urls>"] },
+    ["blocking"]
+  );
+  

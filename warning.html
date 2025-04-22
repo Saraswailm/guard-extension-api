@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Fishix Warning</title>
+  <style>
+    body {
+      background: #420000;
+      color: white;
+      text-align: center;
+      padding-top: 10%;
+      font-family: Arial, sans-serif;
+    }
+    .btn {
+      margin: 20px;
+      padding: 10px 24px;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .block {
+      background-color: #ff4d4d;
+      color: white;
+    }
+    .allow {
+      background-color: #ccc;
+      color: black;
+    }
+  </style>
+</head>
+<body>
+  <h1>🛡️ FISHIX</h1>
+  <h2>⚠️ This site may be a phishing website!</h2>
+  <p id="display-url" style="font-size: 14px; color: #ffdddd;"></p>
+  <button class="btn block" onclick="block()">Block</button>
+  <button class="btn allow" onclick="allow()">Allow</button>
+
+  <script>
+    // Show the URL
+    chrome.storage.local.get("blockedUrl").then(({ blockedUrl }) => {
+      document.getElementById("display-url").textContent = blockedUrl || "";
+    });
+
+    function block() {
+      document.body.innerHTML = "<h1 style='color:white; margin-top:20%;'>❌ Access Blocked by FISHIX</h1>";
+      document.body.style.backgroundColor = "#550000";
+    }
+
+    async function allow() {
+      const { blockedUrl } = await chrome.storage.local.get("blockedUrl");
+      if (blockedUrl) {
+        window.location.href = blockedUrl;
+      }
+    }
+  </script>
+</body>
+</html>

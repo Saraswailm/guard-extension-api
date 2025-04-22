@@ -6,13 +6,18 @@ fetch("https://guard-extension-api.onrender.com/predict", {
   headers: {
     "Content-Type": "application/json",
   },
-  body: JSON.stringify({ url: url })
+  body: JSON.stringify({ url })
 })
-  .then(response => response.json())
-  .then(data => {
-    if (data.result === 1) {
-      // Pause user interaction visually
+  .then((response) => response.json())
+  .then((data) => {
+    console.log("🛡️ Fishix model result:", data.result);
+
+    if (data.result === 1 && !document.getElementById("fishix-overlay")) {
+      // Fallback visual warning if the site wasn’t blocked in time
+
+      // Create dark overlay
       const overlay = document.createElement("div");
+      overlay.id = "fishix-overlay";
       overlay.style.position = "fixed";
       overlay.style.top = 0;
       overlay.style.left = 0;
@@ -23,7 +28,7 @@ fetch("https://guard-extension-api.onrender.com/predict", {
       overlay.style.zIndex = "99998";
       document.body.appendChild(overlay);
 
-      // Main phishing alert box
+      // Alert box
       const box = document.createElement("div");
       box.style.position = "fixed";
       box.style.top = "20px";
@@ -35,17 +40,22 @@ fetch("https://guard-extension-api.onrender.com/predict", {
       box.style.zIndex = "99999";
       box.style.boxShadow = "0 8px 20px rgba(0, 0, 0, 0.4)";
 
-      // Title
+      // Title with emoji
       const title = document.createElement("div");
-      title.style.fontSize = "20px";
-      title.style.fontWeight = "bold";
-      title.innerHTML = "🛡️ FISHIX";
+      title.innerHTML = `
+        <span style="font-size: 24px; margin-right: 8px;">🛡️</span>
+        <span style="font-weight: bold; font-size: 20px; color: white;">FISHIX</span>
+      `;
+      title.style.display = "flex";
+      title.style.alignItems = "center";
+      title.style.gap = "10px";
+      title.style.marginBottom = "10px";
       box.appendChild(title);
 
       // Warning message
       const message = document.createElement("div");
       message.innerHTML = "<strong>⚠️ This site may be a phishing website!</strong>";
-      message.style.background = "#f8cccc";
+      message.style.background = "#ffcccc";
       message.style.color = "#660000";
       message.style.borderRadius = "10px";
       message.style.padding = "10px";
@@ -70,8 +80,7 @@ fetch("https://guard-extension-api.onrender.com/predict", {
       blockBtn.style.borderRadius = "8px";
       blockBtn.style.fontWeight = "bold";
       blockBtn.onclick = () => {
-        document.body.innerHTML = "";
-        document.write("<h1 style='text-align:center; margin-top:20%; color:white;'>❌ Access Blocked by FISHIX</h1>");
+        document.body.innerHTML = "<h1 style='text-align:center; margin-top:20%; color:white;'>❌ Access Blocked by FISHIX</h1>";
         document.body.style.backgroundColor = "#550000";
       };
 
@@ -90,7 +99,8 @@ fetch("https://guard-extension-api.onrender.com/predict", {
       buttons.appendChild(blockBtn);
       buttons.appendChild(allowBtn);
       box.appendChild(buttons);
+
       document.body.appendChild(box);
     }
   })
-  .catch(err => console.error("Phishing check error:", err));
+  .catch((err) => console.error("Fishix detection error:", err));
