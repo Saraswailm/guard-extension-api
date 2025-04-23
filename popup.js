@@ -1,12 +1,14 @@
-chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-  const url = tabs[0].url;
+chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+  const url = new URL(tabs[0].url);
+  const hostname = url.hostname;
 
   const whitelist = ["github.com", "google.com", "microsoft.com"];
-  function isWhitelisted(url) {
-    return whitelist.some(domain => url.includes(domain));
+
+  function isWhitelisted(hostname) {
+    return whitelist.some(domain => hostname.includes(domain));
   }
 
-  if (isWhitelisted(url)) {
+  if (isWhitelisted(hostname)) {
     document.getElementById("status").textContent = "✅ Whitelisted site, safe.";
     return;
   }
@@ -14,7 +16,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
   fetch("https://guard-extension-api.onrender.com/predict", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ url })
+    body: JSON.stringify({ url: tabs[0].url })
   })
     .then(res => res.json())
     .then(data => {
