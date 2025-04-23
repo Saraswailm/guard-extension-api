@@ -104,5 +104,6 @@ fetch("https://guard-extension-api.onrender.com/predict", {
     box.appendChild(buttons);
     document.body.appendChild(box);
   }
+  .catch(err => console.error("Phishing check error:", err));
 })
-.catch(err => console.error("Phishing check error:", err));
+
