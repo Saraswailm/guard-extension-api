@@ -1,7 +1,8 @@
 // content.js
 const url = window.location.href;
 
-fetch("https://guard-extension-api.onrender.com/predict", {
+fetch("https://guard-extension-api.onrender.com/predict", { 
+
   method: "POST",
   headers: {
     "Content-Type": "application/json",
