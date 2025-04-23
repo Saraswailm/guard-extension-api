@@ -1,14 +1,4 @@
 const url = window.location.href;
-const whitelist = ["github.com", "google.com", "microsoft.com"];
-
-function isWhitelisted(url) {
-  return whitelist.some(domain => url.includes(domain));
-}
-
-if (isWhitelisted(url)) {
-  console.log("✅ Whitelisted site detected.");
-  return; // Skip warning or prediction
-}
 
 fetch("https://guard-extension-api.onrender.com/predict", {
   method: "POST",
@@ -18,7 +8,6 @@ fetch("https://guard-extension-api.onrender.com/predict", {
 .then(response => response.json())
 .then(data => {
   if (data.result === 1) {
-    // Red overlay
     const overlay = document.createElement("div");
     overlay.style = `
       position: fixed;
@@ -32,26 +21,6 @@ fetch("https://guard-extension-api.onrender.com/predict", {
     `;
     document.body.appendChild(overlay);
 
-    // Center warning message (in the middle of the screen)
-    const centerWarning = document.createElement("div");
-    centerWarning.innerHTML = "<strong>⚠️ This site may be a phishing website!</strong>";
-    centerWarning.style = `
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: #ffcccc;
-      color: #660000;
-      border-radius: 10px;
-      padding: 10px 20px;
-      font-size: 16px;
-      text-align: center;
-      z-index: 99999;
-      font-weight: bold;
-    `;
-    document.body.appendChild(centerWarning);
-
-    // Top right popup box
     const box = document.createElement("div");
     box.style = `
       position: fixed;
@@ -63,7 +32,6 @@ fetch("https://guard-extension-api.onrender.com/predict", {
       color: #fff;
       z-index: 99999;
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-      max-width: 300px;
     `;
 
     const title = document.createElement("div");
@@ -71,25 +39,33 @@ fetch("https://guard-extension-api.onrender.com/predict", {
     title.style.marginBottom = "10px";
     box.appendChild(title);
 
-    const popupMessage = document.createElement("div");
-    popupMessage.innerHTML = "⚠️ This site may be a phishing website!";
-    popupMessage.style = `
+    const message = document.createElement("div");
+    message.innerHTML = "<strong>⚠️ This site may be a phishing website!</strong>";
+    message.style = `
       background: #ffcccc;
       color: #660000;
-      border-radius: 8px;
-      padding: 8px;
-      font-size: 14px;
-      font-weight: bold;
-      margin-bottom: 10px;
+      border-radius: 10px;
+      padding: 10px;
+      margin-top: 12px;
+      font-size: 16px;
       text-align: center;
     `;
-    box.appendChild(popupMessage);
+
+    const centerWarning = message.cloneNode(true);
+    centerWarning.style.position = "fixed";
+    centerWarning.style.top = "50%";
+    centerWarning.style.left = "50%";
+    centerWarning.style.transform = "translate(-50%, -50%)";
+    centerWarning.style.zIndex = "99999";
+    document.body.appendChild(centerWarning);
+    box.appendChild(message);
 
     const buttons = document.createElement("div");
     buttons.style = `
       display: flex;
       justify-content: center;
       gap: 10px;
+      margin-top: 15px;
     `;
 
     const blockBtn = document.createElement("button");
