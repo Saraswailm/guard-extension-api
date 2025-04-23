@@ -7,6 +7,19 @@ from utils import extract_ml_features, rule_based_detection, is_blacklisted
 
 app = Flask(__name__)
 CORS(app)
+import os
+import joblib
+import requests
+
+MODEL_URL = "https://huggingface.co/sarasw/fishix-phishing-detector/resolve/main/phishing_model.pkl?download=true"
+
+# Download the model if it's not already present
+if not os.path.exists("phishing_model.pkl"):
+    print("🔽 Downloading phishing model from Hugging Face...")
+    r = requests.get(MODEL_URL)
+    with open("phishing_model.pkl", "wb") as f:
+        f.write(r.content)
+
 
 model = joblib.load("phishing_model.pkl")
 
