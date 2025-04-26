@@ -27,7 +27,7 @@
           left: 0;
           width: 100vw;
           height: 100vh;
-          background-color: rgba(153, 0, 0, 0.7);
+          background-color: rgba(153, 0, 0, 0.8); /* darker background */
           backdrop-filter: blur(5px);
           z-index: 99998;
         `;
@@ -65,14 +65,6 @@
         `;
         box.appendChild(message);
 
-        const centerWarning = message.cloneNode(true);
-        centerWarning.style.position = "fixed";
-        centerWarning.style.top = "50%";
-        centerWarning.style.left = "50%";
-        centerWarning.style.transform = "translate(-50%, -50%)";
-        centerWarning.style.zIndex = "99999";
-        document.body.appendChild(centerWarning);
-
         const buttons = document.createElement("div");
         buttons.style = `
           display: flex;
@@ -90,6 +82,7 @@
           padding: 8px 16px;
           border-radius: 8px;
           font-weight: bold;
+          cursor: pointer;
         `;
         blockBtn.onclick = () => {
           document.body.innerHTML = "";
@@ -105,11 +98,11 @@
           padding: 8px 16px;
           border-radius: 8px;
           font-weight: bold;
+          cursor: pointer;
         `;
         allowBtn.onclick = () => {
           box.remove();
           overlay.remove();
-          centerWarning.remove();
         };
 
         buttons.appendChild(blockBtn);
