@@ -1,115 +1,134 @@
+function checkUrlAgainstLists(url) {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(["whitelist", "blacklist"], (data) => {
+      const whitelist = data.whitelist || [];
+      const blacklist = data.blacklist || [];
+
+      if (blacklist.some(domain => url.includes(domain))) {
+        resolve("blacklist");
+      } else if (whitelist.some(domain => url.includes(domain))) {
+        resolve("whitelist");
+      } else {
+        resolve("none");
+      }
+    });
+  });
+}
+
 (function () {
   const url = window.location.href;
 
-  const whitelist = ["github.com", "google.com", "microsoft.com"];
-  function isWhitelisted(url) {
-    return whitelist.some(domain => url.includes(domain));
-  }
+  checkUrlAgainstLists(url).then((listResult) => {
+    if (listResult === "blacklist") {
+      console.log("🚨 Blacklisted site detected.");
+      // (You can block the page later here)
+      return;
+    } else if (listResult === "whitelist") {
+      console.log("✅ Whitelisted site detected.");
+      return;
+    } else {
+      // Not in whitelist or blacklist -> Call API
+      fetch("https://guard-extension-api.onrender.com/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.result === 1) {
+          // 🔴 Phishing detected, show warning overlay
+          const overlay = document.createElement("div");
+          overlay.style = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(153, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 99998;
+          `;
+          document.body.appendChild(overlay);
 
-  if (isWhitelisted(url)) {
-    console.log("✅ Whitelisted site detected.");
-    return;
-  }
+          const box = document.createElement("div");
+          box.style = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 20px;
+            border-radius: 16px;
+            background: linear-gradient(to right, #420000, #a42121);
+            color: #fff;
+            z-index: 99999;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+          `;
 
-  fetch("https://guard-extension-api.onrender.com/predict", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ url })
-  })
-    .then(response => response.json())
-    .then(data => {
-      if (data.result === 1) {
-        // Red overlay
-        const overlay = document.createElement("div");
-        overlay.style = `
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100vw;
-          height: 100vh;
-          background-color: rgba(153, 0, 0, 0.8); /* darker background */
-          backdrop-filter: blur(5px);
-          z-index: 99998;
-        `;
-        document.body.appendChild(overlay);
+          const title = document.createElement("div");
+          title.innerHTML = `<span style="font-weight: bold; font-size: 20px; color: white;">🛡️ FISHIX</span>`;
+          title.style.marginBottom = "10px";
+          box.appendChild(title);
 
-        // Popup top-right
-        const box = document.createElement("div");
-        box.style = `
-          position: fixed;
-          top: 20px;
-          right: 20px;
-          padding: 20px;
-          border-radius: 16px;
-          background: linear-gradient(to right, #420000, #a42121);
-          color: #fff;
-          z-index: 99999;
-          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-        `;
+          const message = document.createElement("div");
+          message.innerHTML = "<strong>⚠️ This site may be a phishing website!</strong>";
+          message.style = `
+            background: #ffcccc;
+            color: #660000;
+            border-radius: 10px;
+            padding: 10px;
+            margin-top: 12px;
+            font-size: 16px;
+            text-align: center;
+          `;
+          box.appendChild(message);
 
-        const title = document.createElement("div");
-        title.innerHTML = `<span style="font-weight: bold; font-size: 20px; color: white;">🛡️ FISHIX</span>`;
-        title.style.marginBottom = "10px";
-        box.appendChild(title);
+          const buttons = document.createElement("div");
+          buttons.style = `
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+          `;
 
-        const message = document.createElement("div");
-        message.innerHTML = "<strong>⚠️ This site may be a phishing website!</strong>";
-        message.style = `
-          background: #ffcccc;
-          color: #660000;
-          border-radius: 10px;
-          padding: 10px;
-          margin-top: 12px;
-          font-size: 16px;
-          text-align: center;
-        `;
-        box.appendChild(message);
+          const blockBtn = document.createElement("button");
+          blockBtn.textContent = "Block";
+          blockBtn.style = `
+            background: #ff4d4d;
+            border: none;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+          `;
+          blockBtn.onclick = () => {
+            document.body.innerHTML = "";
+            document.write("<h1 style='text-align:center; margin-top:20%; color:white;'>❌ Access Blocked by FISHIX</h1>");
+            document.body.style.backgroundColor = "#550000";
+          };
 
-        const buttons = document.createElement("div");
-        buttons.style = `
-          display: flex;
-          justify-content: center;
-          gap: 10px;
-          margin-top: 15px;
-        `;
+          const allowBtn = document.createElement("button");
+          allowBtn.textContent = "Allow";
+          allowBtn.style = `
+            background: #ccc;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+          `;
+          allowBtn.onclick = () => {
+            box.remove();
+            overlay.remove();
+          };
 
-        const blockBtn = document.createElement("button");
-        blockBtn.textContent = "Block";
-        blockBtn.style = `
-          background: #ff4d4d;
-          border: none;
-          color: #fff;
-          padding: 8px 16px;
-          border-radius: 8px;
-          font-weight: bold;
-          cursor: pointer;
-        `;
-        blockBtn.onclick = () => {
-          document.body.innerHTML = "";
-          document.write("<h1 style='text-align:center; margin-top:20%; color:white;'>❌ Access Blocked by FISHIX</h1>");
-          document.body.style.backgroundColor = "#550000";
-        };
-
-        const allowBtn = document.createElement("button");
-        allowBtn.textContent = "Allow";
-        allowBtn.style = `
-          background: #ccc;
-          border: none;
-          padding: 8px 16px;
-          border-radius: 8px;
-          font-weight: bold;
-          cursor: pointer;
-        `;
-        allowBtn.onclick = () => {
-          box.remove();
-          overlay.remove();
-        };
-
-        buttons.appendChild(blockBtn);
-        buttons.appendChild(allowBtn);
-        box.appendChild(buttons);
-        document.body.appendChild(box);
-      }
-    })
-    .catch(err => console.error("Phishing check error:", err));
+          buttons.appendChild(blockBtn);
+          buttons.appendChild(allowBtn);
+          box.appendChild(buttons);
+          document.body.appendChild(box);
+        }
+      })
+      .catch(err => console.error("Phishing check error:", err));
+    }
+  });
 })();
+
