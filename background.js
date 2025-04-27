@@ -1,8 +1,4 @@
 chrome.runtime.onInstalled.addListener(() => {
-  console.log("Fishix extension installed.");
-});
-// Initialize whitelist and blacklist in chrome.storage.local if not already set
-chrome.runtime.onInstalled.addListener(() => {
     chrome.storage.local.get(["whitelist", "blacklist"], (data) => {
         if (!data.whitelist) {
             chrome.storage.local.set({ whitelist: [] });
