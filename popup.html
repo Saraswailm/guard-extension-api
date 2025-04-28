@@ -45,11 +45,10 @@
 <body>
   <h1>🛡️ FISHIX</h1>
 
-  <div id="status" class="status">Scanning current site...</div>
+  <div id="status" class="status">Ready</div>
 
   <button id="manageListsBtn" class="manage-btn">Manage Whitelist/Blacklist</button>
 
-  <script src="popup.js"></script>
   <script>
     document.getElementById('manageListsBtn').addEventListener('click', () => {
       chrome.runtime.openOptionsPage();
@@ -57,3 +56,4 @@
   </script>
 </body>
 </html>
+
