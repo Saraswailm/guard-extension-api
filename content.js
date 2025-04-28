@@ -33,7 +33,14 @@ function checkUrlAgainstLists(url) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url })
       })
-      .then(response => response.json())
+      .then(response => {
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          return response.json();
+        } else {
+          throw new Error("Server did not return JSON.");
+        }
+      })
       .then(data => {
         if (data.result === 1) {
           // 🔴 Phishing detected, show warning overlay
@@ -127,8 +134,10 @@ function checkUrlAgainstLists(url) {
           document.body.appendChild(box);
         }
       })
-      .catch(err => console.error("Phishing check error:", err));
+      .catch(err => {
+        console.error("Phishing check error:", err);
+        // IMPORTANT: now it will NOT create red overlay if error happens
+      });
     }
   });
 })();
-
