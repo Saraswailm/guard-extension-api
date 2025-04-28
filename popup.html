@@ -22,12 +22,38 @@
       border-radius: 6px;
       font-weight: bold;
       text-align: center;
+      margin-bottom: 15px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .manage-btn {
+      padding: 10px;
+      width: 100%;
+      background-color: #660000;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s;
+    }
+    .manage-btn:hover {
+      background-color: #8b0000;
     }
   </style>
 </head>
 <body>
   <h1>🛡️ FISHIX</h1>
+
   <div id="status" class="status">Scanning current site...</div>
+
+  <button id="manageListsBtn" class="manage-btn">Manage Whitelist/Blacklist</button>
+
   <script src="popup.js"></script>
+  <script>
+    document.getElementById('manageListsBtn').addEventListener('click', () => {
+      chrome.runtime.openOptionsPage();
+    });
+  </script>
 </body>
 </html>
