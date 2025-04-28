@@ -21,29 +21,28 @@ function checkUrlAgainstLists(url) {
   checkUrlAgainstLists(url).then((listResult) => {
     if (listResult === "blacklist") {
       console.log("🚨 Blacklisted site detected.");
-      // (You can block the page later here)
+      // (Optional: you can show a blocking overlay if you want)
       return;
     } else if (listResult === "whitelist") {
       console.log("✅ Whitelisted site detected.");
       return;
     } else {
-      // Not in whitelist or blacklist -> Call API
+      // Not in whitelist or blacklist --> Call API
       fetch("https://guard-extension-api.onrender.com/predict", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url })
       })
       .then(response => {
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
+        if (response.headers.get("content-type")?.includes("application/json")) {
           return response.json();
         } else {
-          throw new Error("Server did not return JSON.");
+          throw new Error("Invalid JSON response");
         }
       })
       .then(data => {
         if (data.result === 1) {
-          // 🔴 Phishing detected, show warning overlay
+          // Phishing detected --> Show warning overlay
           const overlay = document.createElement("div");
           overlay.style = `
             position: fixed;
@@ -71,7 +70,7 @@ function checkUrlAgainstLists(url) {
           `;
 
           const title = document.createElement("div");
-          title.innerHTML = `<span style="font-weight: bold; font-size: 20px; color: white;">🛡️ FISHIX</span>`;
+          title.innerHTML = `<span style="font-weight: bold; font-size: 20px;">🛡️ FISHIX</span>`;
           title.style.marginBottom = "10px";
           box.appendChild(title);
 
@@ -135,8 +134,7 @@ function checkUrlAgainstLists(url) {
         }
       })
       .catch(err => {
-        console.error("Phishing check error:", err);
-        // IMPORTANT: now it will NOT create red overlay if error happens
+        console.error("Phishing check error:", err.message);
       });
     }
   });
