@@ -1,95 +1,55 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import joblib
-import requests
-import base64
-from utils import extract_ml_features, rule_based_detection, is_blacklisted
+from urllib.parse import urlparse
+import re
 
 app = Flask(__name__)
-CORS(app)
+CORS(app)  # Allow cross-origin access for Chrome Extension
 
+# Load the saved model once
+model = joblib.load("phishing_model_xgb.pkl")
 
-model = joblib.load("phishing_model.pkl")
-
-VT_API_KEY = "YOUR_VIRUSTOTAL_API_KEY"  # Replace with your real key
-
-def get_virustotal_data(url):
-    headers = {
-        "x-apikey": VT_API_KEY
-    }
-
-    url_id = base64.urlsafe_b64encode(url.encode()).decode().strip("=")
-    api_url = f"https://www.virustotal.com/api/v3/urls/{url_id}"
-
+# Define the same feature extractor
+def extract_features(url):
     try:
-        response = requests.get(api_url, headers=headers)
-        if response.status_code == 200:
-            data = response.json()
-            stats = data["data"]["attributes"].get("last_analysis_stats", {})
-            malicious_engines = stats.get("malicious", 0)
-            suspicious_engines = stats.get("suspicious", 0)
-            tags = data["data"]["attributes"].get("tags", [])
-            return {
-                "malicious": malicious_engines,
-                "suspicious": suspicious_engines,
-                "tags": tags
-            }
+        parsed_url = urlparse(url)
+        domain = parsed_url.netloc
+        path = parsed_url.path
+
+        return [
+            len(url),
+            url.count('.'),
+            url.count('-'),
+            url.count('@'),
+            url.count('//'),
+            len(domain),
+            len(path),
+            sum(c.isdigit() for c in url) / len(url) if len(url) > 0 else 0,
+            sum(c in "-_/@?&=" for c in url) / len(url) if len(url) > 0 else 0,
+            domain.count('.'),
+            int(bool(re.search(r"bit\.ly|tinyurl|t\.co", url))),
+            int(bool(re.search(r"login|secure|bank|verify", url, re.IGNORECASE)))
+        ]
     except Exception as e:
-        print(f"[VirusTotal Error] {e}")
-    
-    return None
+        return [0] * 12  # safe fallback features
 
-@app.route("/predict", methods=["POST"])
+# API endpoint for prediction
+@app.route('/predict', methods=['POST'])
 def predict():
-    data = request.get_json()
-    url = data.get("url", "")
-
     try:
-        response = requests.get(url, timeout=5, allow_redirects=True)
-        final_url = response.url
-        print(f"[INFO] Final resolved URL: {final_url}")
-    except requests.exceptions.RequestException:
-        final_url = url
-        print(f"[ERROR] Failed to fetch URL. Using original: {url}")
+        data = request.get_json()
+        url = data.get('url', '')
+        if not url:
+            return jsonify({'error': 'No URL provided'}), 400
+        
+        features = [extract_features(url)]
+        prediction = model.predict(features)[0]  # 1 = phishing, 0 = benign
 
-    # Combine rule-based + blacklist detection
-    rule_tags = []
-    if rule_based_detection(final_url):
-        rule_tags.append("Triggered rule-based detection")
-        return jsonify({
-            "result": 1,
-            "source": "Rule-based",
-            "tags": rule_tags
-        })
-
-    if is_blacklisted(final_url):
-        rule_tags.append("Found in blacklist")
-        return jsonify({
-            "result": 1,
-            "source": "Blacklist",
-            "tags": rule_tags
-        })
-
-    # ML prediction + confidence
-    features = [extract_ml_features(final_url)]
-    prediction = model.predict(features)[0]
-    proba = model.predict_proba(features)[0][1]
-
-    # Get VirusTotal threat intelligence
-    vt_result = get_virustotal_data(final_url)
-    vt_tags = vt_result.get("tags", []) if vt_result else []
-    malicious_count = vt_result.get("malicious", 0) if vt_result else 0
-
-    # Merge tags
-    combined_tags = rule_tags + vt_tags
-
-    return jsonify({
-        "result": int(prediction),
-        "source": "ML + VT",
-        "confidence": round(proba, 2),
-        "tags": combined_tags,
-        "engines": malicious_count
-    })
+        return jsonify({'result': int(prediction)})
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5050)
+    app.run(host="0.0.0.0", port=5000)
