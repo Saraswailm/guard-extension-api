@@ -15,3 +15,9 @@
 //  document.getElementById("status").textContent = "❌ Error checking URL.";
 //});
 //
+document.addEventListener("DOMContentLoaded", () => {
+  const statusDiv = document.getElementById("status");
+  statusDiv.textContent = "FISHIX is protecting you ✅";
+
+  // Later you can add "Manage whitelist/blacklist" button here if you want
+});
