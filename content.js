@@ -1,3 +1,4 @@
+// Function to check whitelist/blacklist
 function checkUrlAgainstLists(url) {
   return new Promise((resolve) => {
     chrome.storage.local.get(["whitelist", "blacklist"], (data) => {
@@ -15,34 +16,42 @@ function checkUrlAgainstLists(url) {
   });
 }
 
+// Main execution
 (function () {
   const url = window.location.href;
+
+  // 🚫 Skip extension internal pages
+  if (url.startsWith("chrome-extension://")) {
+    console.log("Skipping internal Chrome extension pages.");
+    return;
+  }
 
   checkUrlAgainstLists(url).then((listResult) => {
     if (listResult === "blacklist") {
       console.log("🚨 Blacklisted site detected.");
-      // (Optional: you can show a blocking overlay if you want)
       return;
     } else if (listResult === "whitelist") {
       console.log("✅ Whitelisted site detected.");
       return;
     } else {
-      // Not in whitelist or blacklist --> Call API
+      // 🛡️ Not in lists ➔ Call the ML model
       fetch("https://guard-extension-api.onrender.com/predict", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url })
       })
       .then(response => {
-        if (response.headers.get("content-type")?.includes("application/json")) {
+        // ✅ Make sure server returns valid JSON
+        const contentType = response.headers.get("content-type") || "";
+        if (contentType.includes("application/json")) {
           return response.json();
         } else {
-          throw new Error("Invalid JSON response");
+          throw new Error("Invalid JSON response from server.");
         }
       })
       .then(data => {
         if (data.result === 1) {
-          // Phishing detected --> Show warning overlay
+          // 🔴 Phishing detected ➔ Show overlay
           const overlay = document.createElement("div");
           overlay.style = `
             position: fixed;
