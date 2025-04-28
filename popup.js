@@ -1,23 +1,21 @@
+// popup.js
 
-//const url = window.location.href;
+document.addEventListener('DOMContentLoaded', function () {
+  const settingsButton = document.createElement('button');
+  settingsButton.textContent = "Open Settings (Whitelist/Blacklist)";
+  settingsButton.style = `
+    background: #ffcccc;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 10px;
+  `;
+  settingsButton.onclick = function () {
+    chrome.runtime.openOptionsPage();
+  };
 
-//fetch("https://guard-extension-api.onrender.com/predict", {
-  //method: "POST",
-  //headers: { "Content-Type": "application/json" },
-  //body: JSON.stringify({ url })
-//})
-//.then(res => res.json())
-//.then(data => {
-//  const statusDiv = document.getElementById("status");
-//  statusDiv.textContent = data.result === 1 ? "⚠️ Phishing detected!" : "✅ This site appears safe.";
-//})
-//.catch(() => {
-//  document.getElementById("status").textContent = "❌ Error checking URL.";
-//});
-//
-document.addEventListener("DOMContentLoaded", () => {
-  const statusDiv = document.getElementById("status");
-  statusDiv.textContent = "FISHIX is protecting you ✅";
-
-  // Later you can add "Manage whitelist/blacklist" button here if you want
+  document.body.appendChild(settingsButton);
 });
