@@ -2,19 +2,30 @@
   "manifest_version": 3,
   "name": "Fishix",
   "version": "1.0",
-  "description": "Pauses suspicious URLs before allowing navigation.",
-  "permissions": ["tabs", "storage"],
-  "host_permissions": ["<all_urls>"],
+  "description": "Pauses and analyzes suspicious URLs before navigation using ML and VirusTotal.",
+  "permissions": [
+    "tabs",
+    "storage",
+    "scripting",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "background": {
     "service_worker": "background.js"
   },
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
       "128": "icon128.png"
     }
   },
   "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
     "128": "icon128.png"
   },
   "options_ui": {
@@ -25,8 +36,13 @@
     {
       "matches": ["<all_urls>"],
       "js": ["content.js"],
-      "run_at": "document_idle"
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["overlay.css", "warning.html", "shield-icon.png"],
+      "matches": ["<all_urls>"]
     }
   ]
 }
-
