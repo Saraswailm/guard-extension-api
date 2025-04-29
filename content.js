@@ -20,7 +20,7 @@ function checkUrlAgainstLists(url) {
 (function () {
   const url = window.location.href;
 
-  // 🚫 Skip Chrome internal pages
+  // 🚫 Skip internal extension pages
   if (url.startsWith("chrome-extension://")) {
     console.log("Skipping internal Chrome extension pages.");
     return;
@@ -34,26 +34,25 @@ function checkUrlAgainstLists(url) {
       console.log("✅ Whitelisted site detected.");
       return;
     } else {
-      // 🛡️ Not in lists → Call the ML model
+      // 🛡️ Not in list → Check with ML model
       fetch("https://guard-extension-api.onrender.com/predict", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url })
       })
       .then(response => {
-        if (!response || !response.headers) {
-          throw new Error("No valid response object received.");
+        if (!response || !response.ok || !response.headers) {
+          throw new Error("No valid response received.");
         }
         const contentType = response.headers.get("content-type") || "";
-        if (contentType.includes("application/json")) {
-          return response.json();
-        } else {
-          throw new Error("Invalid JSON response from server.");
+        if (!contentType.includes("application/json")) {
+          throw new Error("Invalid content type from server.");
         }
+        return response.json();
       })
       .then(data => {
         if (data.result === 1) {
-          // 🔴 Phishing detected → Show red overlay
+          // 🔴 Phishing Detected
           const overlay = document.createElement("div");
           overlay.style = `
             position: fixed;
@@ -142,10 +141,51 @@ function checkUrlAgainstLists(url) {
           buttons.appendChild(allowBtn);
           box.appendChild(buttons);
           document.body.appendChild(box);
+
+        } else if (data.result === 0) {
+          // ✅ Safe Site Detected
+          const safeBox = document.createElement("div");
+          safeBox.style = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 20px;
+            border-radius: 16px;
+            background: linear-gradient(to right, #003300, #00cc66);
+            color: #fff;
+            z-index: 99999;
+            font-weight: bold;
+            font-size: 18px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+          `;
+          safeBox.textContent = "✅ This site is safe";
+          document.body.appendChild(safeBox);
+
+          // Auto-hide after 4 seconds
+          setTimeout(() => {
+            safeBox.remove();
+          }, 4000);
         }
       })
       .catch(err => {
         console.error("Phishing check error:", err.message);
+
+        const errorBox = document.createElement("div");
+        errorBox.textContent = "⚠️ Unable to classify site (network error)";
+        errorBox.style = `
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: #555;
+          color: white;
+          padding: 12px 16px;
+          border-radius: 10px;
+          z-index: 99999;
+          font-weight: bold;
+        `;
+        document.body.appendChild(errorBox);
+
+        setTimeout(() => errorBox.remove(), 4000);
       });
     }
   });
