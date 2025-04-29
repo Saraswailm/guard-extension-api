@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     })
     .then(data => {
-      if (data.result === 1) {
+      if (data.result === "phishing") {
         statusEl.textContent = "⚠️ Phishing detected!";
         statusEl.style.background = "#8B0000";
       } else {
