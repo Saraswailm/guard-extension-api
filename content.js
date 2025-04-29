@@ -20,7 +20,7 @@ function checkUrlAgainstLists(url) {
 (function () {
   const url = window.location.href;
 
-  // 🚫 Skip extension internal pages
+  // 🚫 Skip internal Chrome extension pages
   if (url.startsWith("chrome-extension://")) {
     console.log("Skipping internal Chrome extension pages.");
     return;
@@ -34,14 +34,13 @@ function checkUrlAgainstLists(url) {
       console.log("✅ Whitelisted site detected.");
       return;
     } else {
-      // 🛡️ Not in lists ➔ Call the ML model
-      fetch("https://guard-extension-api.onrender.com", {
+      // 🛡️ Not in lists → Call the ML model
+      fetch("https://guard-extension-api.onrender.com/predict", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url })
       })
       .then(response => {
-        // ✅ Make sure server returns valid JSON
         const contentType = response.headers.get("content-type") || "";
         if (contentType.includes("application/json")) {
           return response.json();
@@ -51,7 +50,7 @@ function checkUrlAgainstLists(url) {
       })
       .then(data => {
         if (data.result === 1) {
-          // 🔴 Phishing detected ➔ Show overlay
+          // 🔴 Phishing detected → Show overlay
           const overlay = document.createElement("div");
           overlay.style = `
             position: fixed;
