@@ -10,7 +10,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Load ML model
-model = joblib.load("phishing_model_structured.pkl")
+model = joblib.load("phishing_model_xgb.pkl")
 EXPECTED_FEATURES_COUNT = 89
 
 # Your VirusTotal API key
