@@ -1,4 +1,3 @@
-// Load existing whitelist and blacklist
 function loadLists() {
   chrome.storage.local.get(["whitelist", "blacklist"], (data) => {
     const whitelist = data.whitelist || [];
@@ -11,6 +10,16 @@ function loadLists() {
     whitelist.forEach(domain => {
       const li = document.createElement("li");
       li.textContent = domain;
+
+      const removeBtn = document.createElement("button");
+      removeBtn.textContent = "❌";
+      removeBtn.style.marginLeft = "10px";
+      removeBtn.onclick = () => {
+        const updated = whitelist.filter(d => d !== domain);
+        chrome.storage.local.set({ whitelist: updated }, loadLists);
+      };
+
+      li.appendChild(removeBtn);
       whitelistElement.appendChild(li);
     });
 
@@ -18,6 +27,16 @@ function loadLists() {
     blacklist.forEach(domain => {
       const li = document.createElement("li");
       li.textContent = domain;
+
+      const removeBtn = document.createElement("button");
+      removeBtn.textContent = "❌";
+      removeBtn.style.marginLeft = "10px";
+      removeBtn.onclick = () => {
+        const updated = blacklist.filter(d => d !== domain);
+        chrome.storage.local.set({ blacklist: updated }, loadLists);
+      };
+
+      li.appendChild(removeBtn);
       blacklistElement.appendChild(li);
     });
   });
@@ -28,8 +47,7 @@ document.getElementById("addWhitelistBtn").addEventListener("click", () => {
   const domain = document.getElementById("whitelistInput").value.trim();
   if (domain) {
     chrome.storage.local.get(["whitelist"], (data) => {
-      const whitelist = data.whitelist || [];
-      whitelist.push(domain);
+      const whitelist = [...new Set([...(data.whitelist || []), domain])];
       chrome.storage.local.set({ whitelist }, loadLists);
     });
   }
@@ -40,8 +58,7 @@ document.getElementById("addBlacklistBtn").addEventListener("click", () => {
   const domain = document.getElementById("blacklistInput").value.trim();
   if (domain) {
     chrome.storage.local.get(["blacklist"], (data) => {
-      const blacklist = data.blacklist || [];
-      blacklist.push(domain);
+      const blacklist = [...new Set([...(data.blacklist || []), domain])];
       chrome.storage.local.set({ blacklist }, loadLists);
     });
   }
