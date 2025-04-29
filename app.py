@@ -13,12 +13,11 @@ CORS(app)
 model = joblib.load("phishing_model_xgb.pkl")
 EXPECTED_FEATURES_COUNT = 12
 
-# Your VirusTotal API key
+# VirusTotal API Key
 VT_API_KEY = "dccc3bf97a1defecb7007a878fe065cbbb2a8460a790d4a510d82e7b4237f251"
 
 # --- Helper Functions ---
 
-# Rule-based detection
 def rule_based_detection(url):
     signs = [
         bool(re.search(r'\d+\.\d+\.\d+\.\d+', url)),  # IP in URL
@@ -29,12 +28,10 @@ def rule_based_detection(url):
     ]
     return any(signs)
 
-# Heuristic-based detection
 def heuristic_based_detection(url):
     suspicious_keywords = ['secure', 'account', 'update', 'login', 'free', 'verify', 'password', 'banking']
     return any(keyword in url.lower() for keyword in suspicious_keywords)
 
-# VirusTotal lookup
 def virus_total_check(url):
     try:
         headers = {"x-apikey": VT_API_KEY}
@@ -57,50 +54,47 @@ def predict():
     try:
         data = request.get_json()
 
-        # Handle missing input
         url = data.get("url", "")
         features = data.get("features", [])
 
         if not url or not features or len(features) != EXPECTED_FEATURES_COUNT:
             return jsonify({"error": "Invalid input format"}), 400
 
-        result = {
-            "machine_learning": None,
-            "rule_based": None,
-            "heuristic_based": None,
-            "virus_total": None,
-            "final_decision": None
-        }
-
-        # 1. Machine Learning
+        # Machine Learning
         ml_prediction = model.predict([features])[0]
-        result["machine_learning"] = int(ml_prediction)
 
-        # 2. Rule-Based Detection
+        # Rule-Based Detection
         rule_flag = rule_based_detection(url)
-        result["rule_based"] = int(rule_flag)
 
-        # 3. Heuristic-Based Detection
+        # Heuristic-Based Detection
         heuristic_flag = heuristic_based_detection(url)
-        result["heuristic_based"] = int(heuristic_flag)
 
-        # 4. VirusTotal Check
+        # VirusTotal Check
         vt_malicious, vt_suspicious = virus_total_check(url)
         vt_flag = 1 if (vt_malicious + vt_suspicious) > 0 else 0
-        result["virus_total"] = vt_flag
 
-        # --- Final Decision Logic ---
-        # If any method flags as phishing, consider phishing
+        # --- Final Decision ---
         if any([ml_prediction, rule_flag, heuristic_flag, vt_flag]):
-            result["final_decision"] = "phishing"
+            final_decision = "phishing"
         else:
-            result["final_decision"] = "benign"
+            final_decision = "benign"
 
-        return jsonify(result)
-    
+        # 🐟 Debug
+        print("🐟 FINAL DECISION DEBUG")
+        print("URL →", url)
+        print("ML:", ml_prediction)
+        print("RULE:", rule_flag)
+        print("HEURISTIC:", heuristic_flag)
+        print("VT:", vt_flag)
+        print("→ Final:", final_decision)
+
+        return jsonify({
+            "final_decision": final_decision
+        })
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Run server
+# Run
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5050)
