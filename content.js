@@ -35,7 +35,7 @@ function checkUrlAgainstLists(url) {
       return;
     } else {
       // 🛡️ Not in lists ➔ Call the ML model
-      fetch("https://guard-extension-api.onrender.com/predict", {
+      fetch("https://guard-extension-api.onrender.com", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url })
