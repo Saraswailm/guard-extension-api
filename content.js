@@ -52,8 +52,16 @@ function checkUrlAgainstLists(url) {
         }
       })
       .then(data => {
-        if (data.result === 1) {
-          // 🔴 Phishing detected → Show red overlay
+        // Debug logs for dev testing
+        console.log("🐟 FISHIX Detection Log:");
+        console.log("ML:", data.machine_learning);
+        console.log("Rule-Based:", data.rule_based);
+        console.log("Heuristic:", data.heuristic_based);
+        console.log("VT:", data.virus_total);
+        console.log("FINAL DECISION:", data.final_decision);
+
+        // 🟥 Phishing
+        if (data.final_decision === "phishing") {
           const overlay = document.createElement("div");
           overlay.style = `
             position: fixed;
@@ -142,8 +150,9 @@ function checkUrlAgainstLists(url) {
           buttons.appendChild(allowBtn);
           box.appendChild(buttons);
           document.body.appendChild(box);
+
         } else {
-          // ✅ Safe site → show green box with same style
+          // ✅ Safe site → show green box
           const safeBox = document.createElement("div");
           safeBox.style = `
             position: fixed;
