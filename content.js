@@ -20,7 +20,7 @@ function checkUrlAgainstLists(url) {
 (function () {
   const url = window.location.href;
 
-  // 🚫 Skip internal Chrome extension pages
+  // 🚫 Skip Chrome internal pages
   if (url.startsWith("chrome-extension://")) {
     console.log("Skipping internal Chrome extension pages.");
     return;
@@ -41,6 +41,9 @@ function checkUrlAgainstLists(url) {
         body: JSON.stringify({ url })
       })
       .then(response => {
+        if (!response || !response.headers) {
+          throw new Error("No valid response object received.");
+        }
         const contentType = response.headers.get("content-type") || "";
         if (contentType.includes("application/json")) {
           return response.json();
@@ -50,7 +53,7 @@ function checkUrlAgainstLists(url) {
       })
       .then(data => {
         if (data.result === 1) {
-          // 🔴 Phishing detected → Show overlay
+          // 🔴 Phishing detected → Show red overlay
           const overlay = document.createElement("div");
           overlay.style = `
             position: fixed;
@@ -78,7 +81,7 @@ function checkUrlAgainstLists(url) {
           `;
 
           const title = document.createElement("div");
-          title.innerHTML = `<span style="font-weight: bold; font-size: 20px;">🛡️ FISHIX</span>`;
+          title.innerHTML = `<span style="font-weight: bold; font-size: 20px;">🛡 FISHIX</span>`;
           title.style.marginBottom = "10px";
           box.appendChild(title);
 
