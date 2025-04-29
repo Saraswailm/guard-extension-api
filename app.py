@@ -1,55 +1,106 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import joblib
-from urllib.parse import urlparse
+import requests
+import base64
 import re
+from urllib.parse import urlparse
 
 app = Flask(__name__)
-CORS(app)  # Allow cross-origin access for Chrome Extension
+CORS(app)
 
-# Load the saved model once
-model = joblib.load("phishing_model_xgb.pkl")
+# Load ML model
+model = joblib.load("phishing_model_structured.pkl")
+EXPECTED_FEATURES_COUNT = 89
 
-# Define the same feature extractor
-def extract_features(url):
+# Your VirusTotal API key
+VT_API_KEY = "dccc3bf97a1defecb7007a878fe065cbbb2a8460a790d4a510d82e7b4237f251"
+
+# --- Helper Functions ---
+
+# Rule-based detection
+def rule_based_detection(url):
+    signs = [
+        bool(re.search(r'\d+\.\d+\.\d+\.\d+', url)),  # IP in URL
+        '@' in url,
+        url.count('//') > 1,
+        '-' in url,
+        len(url) > 75
+    ]
+    return any(signs)
+
+# Heuristic-based detection
+def heuristic_based_detection(url):
+    suspicious_keywords = ['secure', 'account', 'update', 'login', 'free', 'verify', 'password', 'banking']
+    return any(keyword in url.lower() for keyword in suspicious_keywords)
+
+# VirusTotal lookup
+def virus_total_check(url):
     try:
-        parsed_url = urlparse(url)
-        domain = parsed_url.netloc
-        path = parsed_url.path
-
-        return [
-            len(url),
-            url.count('.'),
-            url.count('-'),
-            url.count('@'),
-            url.count('//'),
-            len(domain),
-            len(path),
-            sum(c.isdigit() for c in url) / len(url) if len(url) > 0 else 0,
-            sum(c in "-_/@?&=" for c in url) / len(url) if len(url) > 0 else 0,
-            domain.count('.'),
-            int(bool(re.search(r"bit\.ly|tinyurl|t\.co", url))),
-            int(bool(re.search(r"login|secure|bank|verify", url, re.IGNORECASE)))
-        ]
+        headers = {"x-apikey": VT_API_KEY}
+        url_id = base64.urlsafe_b64encode(url.encode()).decode().strip("=")
+        api_url = f"https://www.virustotal.com/api/v3/urls/{url_id}"
+        response = requests.get(api_url, headers=headers)
+        if response.status_code == 200:
+            data = response.json()
+            stats = data["data"]["attributes"].get("last_analysis_stats", {})
+            malicious = stats.get("malicious", 0)
+            suspicious = stats.get("suspicious", 0)
+            return malicious, suspicious
     except Exception as e:
-        return [0] * 12  # safe fallback features
+        print(f"[VirusTotal error] {e}")
+    return 0, 0
 
-# API endpoint for prediction
-@app.route('/predict', methods=['POST'])
+# --- API Endpoint ---
+@app.route("/predict", methods=["POST"])
 def predict():
     try:
         data = request.get_json()
-        url = data.get('url', '')
-        if not url:
-            return jsonify({'error': 'No URL provided'}), 400
-        
-        features = [extract_features(url)]
-        prediction = model.predict(features)[0]  # 1 = phishing, 0 = benign
 
-        return jsonify({'result': int(prediction)})
+        # Handle missing input
+        url = data.get("url", "")
+        features = data.get("features", [])
+
+        if not url or not features or len(features) != EXPECTED_FEATURES_COUNT:
+            return jsonify({"error": "Invalid input format"}), 400
+
+        result = {
+            "machine_learning": None,
+            "rule_based": None,
+            "heuristic_based": None,
+            "virus_total": None,
+            "final_decision": None
+        }
+
+        # 1. Machine Learning
+        ml_prediction = model.predict([features])[0]
+        result["machine_learning"] = int(ml_prediction)
+
+        # 2. Rule-Based Detection
+        rule_flag = rule_based_detection(url)
+        result["rule_based"] = int(rule_flag)
+
+        # 3. Heuristic-Based Detection
+        heuristic_flag = heuristic_based_detection(url)
+        result["heuristic_based"] = int(heuristic_flag)
+
+        # 4. VirusTotal Check
+        vt_malicious, vt_suspicious = virus_total_check(url)
+        vt_flag = 1 if (vt_malicious + vt_suspicious) > 0 else 0
+        result["virus_total"] = vt_flag
+
+        # --- Final Decision Logic ---
+        # If any method flags as phishing, consider phishing
+        if any([ml_prediction, rule_flag, heuristic_flag, vt_flag]):
+            result["final_decision"] = "phishing"
+        else:
+            result["final_decision"] = "benign"
+
+        return jsonify(result)
     
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
+# Run server
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
