@@ -1,4 +1,3 @@
-// Function to check URL against local whitelist and blacklist
 function checkUrlAgainstLists(url) {
   return new Promise((resolve) => {
     chrome.storage.local.get(["whitelist", "blacklist"], (data) => {
@@ -24,7 +23,6 @@ function checkUrlAgainstLists(url) {
     return;
   }
 
-  // Pause page rendering until check finishes
   document.documentElement.style.display = "none";
 
   checkUrlAgainstLists(url).then((listResult) => {
@@ -54,16 +52,9 @@ function checkUrlAgainstLists(url) {
         }
       })
       .then(data => {
-        // Debugging logs
         console.log("💥 FULL RESPONSE:", data);
-        console.log("🐟 FISHIX Detection Log:");
-        console.log("ML:", data.machine_learning);
-        console.log("Rule-Based:", data.rule_based);
-        console.log("Heuristic:", data.heuristic_based);
-        console.log("VT:", data.virus_total);
-        console.log("FINAL DECISION:", data.final_decision);
 
-        if (data.final_decision === 1) { // 🔥 Corrected here!
+        if (data.final_decision === "phishing") {  // ✅ fixed here
           const overlay = document.createElement("div");
           overlay.style = `
             position: fixed;
