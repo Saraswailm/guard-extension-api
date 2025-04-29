@@ -35,7 +35,7 @@ function checkUrlAgainstLists(url) {
       document.documentElement.style.display = "block";
       return;
     } else {
-      fetch("https://guard-extension-api.onrender.com/predict", {
+      fetch("http://localhost:5050/predict", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url })
