@@ -1,3 +1,4 @@
+// Load existing whitelist and blacklist
 function loadLists() {
   chrome.storage.local.get(["whitelist", "blacklist"], (data) => {
     const whitelist = data.whitelist || [];
@@ -9,7 +10,9 @@ function loadLists() {
     whitelistElement.innerHTML = "";
     whitelist.forEach(domain => {
       const li = document.createElement("li");
-      li.textContent = domain;
+
+      const span = document.createElement("span");
+      span.textContent = domain;
 
       const removeBtn = document.createElement("button");
       removeBtn.textContent = "❌";
@@ -19,6 +22,7 @@ function loadLists() {
         chrome.storage.local.set({ whitelist: updated }, loadLists);
       };
 
+      li.appendChild(span);
       li.appendChild(removeBtn);
       whitelistElement.appendChild(li);
     });
@@ -26,7 +30,9 @@ function loadLists() {
     blacklistElement.innerHTML = "";
     blacklist.forEach(domain => {
       const li = document.createElement("li");
-      li.textContent = domain;
+
+      const span = document.createElement("span");
+      span.textContent = domain;
 
       const removeBtn = document.createElement("button");
       removeBtn.textContent = "❌";
@@ -36,6 +42,7 @@ function loadLists() {
         chrome.storage.local.set({ blacklist: updated }, loadLists);
       };
 
+      li.appendChild(span);
       li.appendChild(removeBtn);
       blacklistElement.appendChild(li);
     });
@@ -50,6 +57,7 @@ document.getElementById("addWhitelistBtn").addEventListener("click", () => {
       const whitelist = [...new Set([...(data.whitelist || []), domain])];
       chrome.storage.local.set({ whitelist }, loadLists);
     });
+    document.getElementById("whitelistInput").value = "";
   }
 });
 
@@ -61,6 +69,7 @@ document.getElementById("addBlacklistBtn").addEventListener("click", () => {
       const blacklist = [...new Set([...(data.blacklist || []), domain])];
       chrome.storage.local.set({ blacklist }, loadLists);
     });
+    document.getElementById("blacklistInput").value = "";
   }
 });
 
