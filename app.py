@@ -11,7 +11,7 @@ CORS(app)
 
 # Load ML model
 model = joblib.load("phishing_model_xgb.pkl")
-EXPECTED_FEATURES_COUNT = 89
+EXPECTED_FEATURES_COUNT = 12
 
 # Your VirusTotal API key
 VT_API_KEY = "dccc3bf97a1defecb7007a878fe065cbbb2a8460a790d4a510d82e7b4237f251"
