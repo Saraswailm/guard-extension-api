@@ -52,28 +52,35 @@ function checkUrlAgainstLists(url) {
         }
       })
       .then(data => {
-        // Debug logs for dev testing
-        console.log("🐟 FISHIX Detection Log:");
-        console.log("ML:", data.machine_learning);
-        console.log("Rule-Based:", data.rule_based);
-        console.log("Heuristic:", data.heuristic_based);
-        console.log("VT:", data.virus_total);
-        console.log("FINAL DECISION:", data.final_decision);
+  // 🔍 Log full response and key field
+  console.log("💥 FULL RESPONSE:", data);
+  alert("DEBUG: final_decision = " + data.final_decision);
 
-        // 🟥 Phishing
-        if (data.final_decision === "phishing") {
-          const overlay = document.createElement("div");
-          overlay.style = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: rgba(153, 0, 0, 0.8);
-            backdrop-filter: blur(5px);
-            z-index: 99998;
-          `;
-          document.body.appendChild(overlay);
+  // Debug logs for dev testing
+  console.log("🐟 FISHIX Detection Log:");
+  console.log("ML:", data.machine_learning);
+  console.log("Rule-Based:", data.rule_based);
+  console.log("Heuristic:", data.heuristic_based);
+  console.log("VT:", data.virus_total);
+  console.log("FINAL DECISION:", data.final_decision);
+
+  // 🟥 Phishing
+  if (data.final_decision === "phishing") {
+    const overlay = document.createElement("div");
+    overlay.style = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(153, 0, 0, 0.8);
+      backdrop-filter: blur(5px);
+      z-index: 99998;
+    `;
+    document.body.appendChild(overlay);
+
+    // ... rest of your red popup code continues here ...
+
 
           const box = document.createElement("div");
           box.style = `
