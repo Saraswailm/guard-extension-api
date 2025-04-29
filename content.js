@@ -1,3 +1,4 @@
+// Function to check URL against local whitelist and blacklist
 function checkUrlAgainstLists(url) {
   return new Promise((resolve) => {
     chrome.storage.local.get(["whitelist", "blacklist"], (data) => {
@@ -23,19 +24,24 @@ function checkUrlAgainstLists(url) {
     return;
   }
 
+  // Pause page rendering until check finishes
+  document.documentElement.style.display = "none";
+
   checkUrlAgainstLists(url).then((listResult) => {
     if (listResult === "blacklist") {
       console.log("🚨 Blacklisted site detected.");
+      document.documentElement.style.display = "block";
       return;
     } else if (listResult === "whitelist") {
       console.log("✅ Whitelisted site detected.");
+      document.documentElement.style.display = "block";
       return;
     } else {
       fetch("https://guard-extension-api.onrender.com/predict", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url })
-       })
+      })
       .then(response => {
         if (!response || !response.headers) {
           throw new Error("No valid response object received.");
@@ -48,9 +54,8 @@ function checkUrlAgainstLists(url) {
         }
       })
       .then(data => {
-        // 🔍 DEBUG logs
+        // Debugging logs
         console.log("💥 FULL RESPONSE:", data);
-        alert("DEBUG: final_decision = " + data.final_decision);
         console.log("🐟 FISHIX Detection Log:");
         console.log("ML:", data.machine_learning);
         console.log("Rule-Based:", data.rule_based);
@@ -58,7 +63,7 @@ function checkUrlAgainstLists(url) {
         console.log("VT:", data.virus_total);
         console.log("FINAL DECISION:", data.final_decision);
 
-        if (data.final_decision === "phishing") {
+        if (data.final_decision === 1) { // 🔥 Corrected here!
           const overlay = document.createElement("div");
           overlay.style = `
             position: fixed;
@@ -86,7 +91,7 @@ function checkUrlAgainstLists(url) {
           `;
 
           const title = document.createElement("div");
-          title.innerHTML = `<span style="font-weight: bold; font-size: 20px;">🛡 FISHIX</span>`;
+          title.innerHTML = `<span style="font-weight: bold; font-size: 20px;">🛡️ FISHIX</span>`;
           title.style.marginBottom = "10px";
           box.appendChild(title);
 
@@ -141,6 +146,7 @@ function checkUrlAgainstLists(url) {
           allowBtn.onclick = () => {
             box.remove();
             overlay.remove();
+            document.documentElement.style.display = "block";
           };
 
           buttons.appendChild(blockBtn);
@@ -170,10 +176,13 @@ function checkUrlAgainstLists(url) {
           setTimeout(() => {
             safeBox.remove();
           }, 4000);
+
+          document.documentElement.style.display = "block";
         }
       })
       .catch(err => {
         console.error("Phishing check error:", err.message);
+        document.documentElement.style.display = "block";
       });
     }
   });
