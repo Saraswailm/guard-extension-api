@@ -1,4 +1,3 @@
-// Function to check whitelist/blacklist
 function checkUrlAgainstLists(url) {
   return new Promise((resolve) => {
     chrome.storage.local.get(["whitelist", "blacklist"], (data) => {
@@ -16,11 +15,9 @@ function checkUrlAgainstLists(url) {
   });
 }
 
-// Main execution
 (function () {
   const url = window.location.href;
 
-  // 🚫 Skip Chrome internal pages
   if (url.startsWith("chrome-extension://")) {
     console.log("Skipping internal Chrome extension pages.");
     return;
@@ -34,7 +31,6 @@ function checkUrlAgainstLists(url) {
       console.log("✅ Whitelisted site detected.");
       return;
     } else {
-      // 🛡️ Not in lists → Call the ML model
       fetch("https://guard-extension-api.onrender.com/predict", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -52,35 +48,29 @@ function checkUrlAgainstLists(url) {
         }
       })
       .then(data => {
-  // 🔍 Log full response and key field
-  console.log("💥 FULL RESPONSE:", data);
-  alert("DEBUG: final_decision = " + data.final_decision);
+        // 🔍 DEBUG logs
+        console.log("💥 FULL RESPONSE:", data);
+        alert("DEBUG: final_decision = " + data.final_decision);
+        console.log("🐟 FISHIX Detection Log:");
+        console.log("ML:", data.machine_learning);
+        console.log("Rule-Based:", data.rule_based);
+        console.log("Heuristic:", data.heuristic_based);
+        console.log("VT:", data.virus_total);
+        console.log("FINAL DECISION:", data.final_decision);
 
-  // Debug logs for dev testing
-  console.log("🐟 FISHIX Detection Log:");
-  console.log("ML:", data.machine_learning);
-  console.log("Rule-Based:", data.rule_based);
-  console.log("Heuristic:", data.heuristic_based);
-  console.log("VT:", data.virus_total);
-  console.log("FINAL DECISION:", data.final_decision);
-
-  // 🟥 Phishing
-  if (data.final_decision === "phishing") {
-    const overlay = document.createElement("div");
-    overlay.style = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background-color: rgba(153, 0, 0, 0.8);
-      backdrop-filter: blur(5px);
-      z-index: 99998;
-    `;
-    document.body.appendChild(overlay);
-
-    // ... rest of your red popup code continues here ...
-
+        if (data.final_decision === "phishing") {
+          const overlay = document.createElement("div");
+          overlay.style = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(153, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 99998;
+          `;
+          document.body.appendChild(overlay);
 
           const box = document.createElement("div");
           box.style = `
@@ -159,7 +149,6 @@ function checkUrlAgainstLists(url) {
           document.body.appendChild(box);
 
         } else {
-          // ✅ Safe site → show green box
           const safeBox = document.createElement("div");
           safeBox.style = `
             position: fixed;
@@ -178,7 +167,6 @@ function checkUrlAgainstLists(url) {
           safeBox.textContent = "✅ This site is safe";
           document.body.appendChild(safeBox);
 
-          // Auto-hide after 4 seconds
           setTimeout(() => {
             safeBox.remove();
           }, 4000);
