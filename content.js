@@ -34,11 +34,8 @@ function checkUrlAgainstLists(url) {
       fetch("https://guard-extension-api.onrender.com/predict", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          url,
-          features: Array(89).fill(0) // temporary dummy features for full response
-        })
-      })
+        body: JSON.stringify({ url })
+       })
       .then(response => {
         if (!response || !response.headers) {
           throw new Error("No valid response object received.");
