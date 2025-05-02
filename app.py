@@ -6,10 +6,11 @@ import base64
 app = Flask(__name__)
 CORS(app)
 
-# VirusTotal API Key
+# API Keys
 VT_API_KEY = "dccc3bf97a1defecb7007a878fe065cbbb2a8460a790d4a510d82e7b4237f251"
+OTX_API_KEY = "3512568d10a6c6a7ad7ea04e5369a6aec5f1febc3e8f542ec3fe1d291bb40f6a"
 
-# Function to check URL against VirusTotal
+# === VirusTotal Check ===
 def virus_total_check(url):
     try:
         headers = {"x-apikey": VT_API_KEY}
@@ -27,7 +28,22 @@ def virus_total_check(url):
         print(f"[VirusTotal error] {e}")
     return None, None
 
-# Prediction endpoint
+# === OTX Check ===
+def otx_check(url):
+    try:
+        headers = {"X-OTX-API-KEY": OTX_API_KEY}
+        api_url = f"https://otx.alienvault.com/api/v1/indicators/url/{url}/general"
+        response = requests.get(api_url, headers=headers, timeout=5)
+
+        if response.status_code == 200:
+            data = response.json()
+            pulses = data.get("pulse_info", {}).get("count", 0)
+            return pulses > 0
+    except Exception as e:
+        print(f"[OTX error] {e}")
+    return False
+
+# === Prediction Endpoint ===
 @app.route("/predict", methods=["POST"])
 def predict():
     try:
@@ -36,8 +52,8 @@ def predict():
         if not url:
             return jsonify({"error": "Missing URL"}), 400
 
+        # Step 1: VirusTotal
         vt_malicious, vt_suspicious = virus_total_check(url)
-
         if vt_malicious is not None:
             if vt_malicious + vt_suspicious > 0:
                 return jsonify({
@@ -50,9 +66,16 @@ def predict():
                     "flagged_by": "VirusTotal (clean)"
                 })
 
+        # Step 2: OTX if VT failed
+        if otx_check(url):
+            return jsonify({
+                "final_decision": "phishing",
+                "flagged_by": "OTX"
+            })
+
         return jsonify({
             "final_decision": "unknown",
-            "flagged_by": "VirusTotal (error)"
+            "flagged_by": "No signal from VT or OTX"
         })
 
     except Exception as e:
