@@ -8,7 +8,7 @@ CORS(app)
 
 # API Keys
 VT_API_KEY = "dccc3bf97a1defecb7007a878fe065cbbb2a8460a790d4a510d82e7b4237f251"
-OTX_API_KEY = "3512568d10a6c6a7ad7ea04e5369a6aec5f1febc3e8f542ec3fe1d291bb40f6a"
+OTX_API_KEY = "28e5d08ae71af68fa0ca60042c861036e6171440f0050d8af1016688fc60003b"
 
 # === VirusTotal Check ===
 def virus_total_check(url):
