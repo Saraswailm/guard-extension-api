@@ -3,6 +3,7 @@ from flask_cors import CORS
 import requests
 import base64
 import re
+import joblib
 
 app = Flask(__name__)
 CORS(app)
@@ -10,6 +11,18 @@ CORS(app)
 # === API Keys ===
 VT_API_KEY = "dccc3bf97a1defecb7007a878fe065cbbb2a8460a790d4a510d82e7b4237f251"
 OTX_API_KEY = "3512568d10a6c6a7ad7ea04e5369a6aec5f1febc3e8f542ec3fe1d291bb40f6a"
+
+# === Load ML Model ===
+ml_model = joblib.load("phishing_model_xgb.pkl")
+
+# === Feature Extraction (simple example, replace with your full 89 features) ===
+def extract_features(url):
+    return [
+        len(url),
+        url.count('-'),
+        url.count('='),
+        int('https' in url),
+    ]
 
 # === VirusTotal Check ===
 def virus_total_check(url):
@@ -79,8 +92,13 @@ def predict():
         if rule and heuristic:
             return jsonify({"final_decision": "phishing", "flagged_by": "Heuristic + Rule"})
 
-        # Step 4: fallback if all else fails
-        return jsonify({"final_decision": "benign", "flagged_by": "Fallback - No flags triggered"})
+        # Step 4: ML fallback (only if all above checks didn't flag it)
+        features = extract_features(url)
+        ml_prediction = ml_model.predict([features])[0]
+        if ml_prediction == 1:
+            return jsonify({"final_decision": "phishing", "flagged_by": "ML model"})
+        else:
+            return jsonify({"final_decision": "benign", "flagged_by": "ML model"})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -88,3 +106,4 @@ def predict():
 # === Run App ===
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5050)
+
